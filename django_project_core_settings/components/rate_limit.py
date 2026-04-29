@@ -1,0 +1,9 @@
+RATELIMIT_USE_CACHE = 'default'
+RATELIMIT_VIEW = 'ratelimit.views.RatelimitView'
+
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 30
+AXES_RESET_ON_SUCCESS = True
+AXES_USERNAME_FORM_FIELD = 'email'
+AXES_LOCKOUT_PARAMETERS = ['username', 'ip_address']

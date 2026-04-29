@@ -1,0 +1,42 @@
+[project]
+name = "django-project-core-settings"
+version = "0.1.1"
+description = "Production-ready modular Django settings with strong security defaults"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+authors = [
+    {name = "Wilfred", email = "wilfredpine9@gmail.com"}
+]
+
+keywords = ["django", "settings", "security", "modular"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Django",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+]
+
+dependencies = [
+    "Django>=4.2",
+    "python-dotenv>=1.0",
+    "whitenoise>=6.0",
+    "django-axes>=6.0",
+    "django-ratelimit>=4.0",
+    "django-redis>=5.0",
+    "python-json-logger>=2.0",
+    "django-did-auth>=0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/wilfredpine/django-project-core-settings"
+Repository = "https://github.com/wilfredpine/django-project-core-settings"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["django_project_core_settings*"]
