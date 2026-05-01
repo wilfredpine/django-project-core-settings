@@ -3,7 +3,7 @@ from .base import *
 from .utils.env import get_list_env
 
 DEBUG = False
-SAUTH = SAUTH_CONFIG(DEBUG)
+DID_AUTH = DID_AUTH_CONFIG(DEBUG)
 
 ALLOWED_HOSTS = get_list_env("ALLOWED_HOSTS", required=True)
 

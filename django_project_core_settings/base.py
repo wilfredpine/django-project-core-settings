@@ -3,7 +3,7 @@ from .utils.paths import BASE_DIR
 
 from .utils.path_validator import ensure_dirs
 
-# 📁 Ensure core directories exist
+# Ensure core directories exist
 ensure_dirs(
     BASE_DIR / "logs",
     BASE_DIR / "media",
@@ -17,7 +17,7 @@ from .components.core import *
 from .components.apps import *
 from .components.middleware import *
 from .components.auth import *
-from .components.sauth import *
+from .components.did_auth import *
 from .components.database import *
 from .components.cache import *
 from .components.rate_limit import *

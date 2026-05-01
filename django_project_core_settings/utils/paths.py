@@ -8,5 +8,5 @@ def get_base_dir() -> Path:
     return Path(os.getenv("BASE_DIR", Path.cwd())).resolve()
 
 
-# 🔥 SINGLE SOURCE OF TRUTH
+# SINGLE SOURCE OF TRUTH
 BASE_DIR = get_base_dir()

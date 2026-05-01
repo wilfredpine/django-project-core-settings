@@ -18,7 +18,7 @@ def ensure_dirs(*paths: Path) -> None:
 def validate_path(path: Path, must_exist: bool = False, name: str = "Path") -> Path:
     """Validate a path safely."""
     if must_exist and not path.exists():
-        raise ValueError(f"❌ {name} does not exist: {path}")
+        raise ValueError(f"{name} does not exist: {path}")
     return path
 
 

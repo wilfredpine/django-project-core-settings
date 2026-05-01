@@ -1,25 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "django-project-core-settings"
-version = "0.1.1"
+version = "0.1.2"
 description = "Production-ready modular Django settings with strong security defaults"
 readme = "README.md"
 requires-python = ">=3.10"
+
 license = {text = "MIT"}
 
 authors = [
-    {name = "Wilfred", email = "wilfredpine9@gmail.com"}
+    { name = "Wilfred Pine", email = "wilfredpine9@gmail.com" }
 ]
 
 keywords = ["django", "settings", "security", "modular"]
 
 classifiers = [
-    "Development Status :: 4 - Beta",
     "Framework :: Django",
     "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.0",
     "Framework :: Django :: 5.1",
-    "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
 ]
 
 dependencies = [
@@ -36,6 +42,9 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/wilfredpine/django-project-core-settings"
 Repository = "https://github.com/wilfredpine/django-project-core-settings"
+
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -10,7 +10,7 @@ INSTALLED_APPS = [
     # Security & utilities
     'axes',
     'django_ratelimit',
-    'django_sauth',          # if you're using it
+    'django_did_auth',          # if you're using it
 
     # Your core apps
     # 'users',

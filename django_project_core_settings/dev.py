@@ -19,5 +19,5 @@ SECURE_HSTS_SECONDS = 0
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
-# SAUTH
-SAUTH = SAUTH_CONFIG(DEBUG)
+# DID_AUTH
+DID_AUTH = DID_AUTH_CONFIG(DEBUG)

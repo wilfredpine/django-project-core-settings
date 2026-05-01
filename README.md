@@ -20,7 +20,7 @@ This package provides a clean, maintainable, and highly secure base configuratio
 - **WhiteNoise** integration for static files
 - **Redis cache** support
 - **Easy extensibility** via `EXTRA_INSTALLED_APPS` and `EXTRA_MIDDLEWARE`
-- **SAUTH** ready (custom authentication app)
+- **DID_AUTH** ready (custom authentication app) (`https://pypi.org/project/django-did-auth/`)
 
 ## Installation
 
@@ -105,12 +105,14 @@ INSTALLED_APPS += [
     # 'ckeditor',
 ]
 
+AUTH_USER_MODEL = 'users.CustomUser'
+
 MIDDLEWARE += [
     # 'your.middleware.Class',
 ]
 
 # === Common overrides ===
-LOGIN_REDIRECT_URL = '/dashboard/'
+# LOGIN_REDIRECT_URL = '/dashboard/' # already in DID_AUTH
 ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
 
@@ -122,72 +124,108 @@ CSRF_TRUSTED_ORIGINS += [
     "https://your-frontend.com",
 ]
 
-# === default SAUTH config (can be overridden in dev/prod) ===
-SAUTH = {
+# === default DID_AUTH config (can be overridden in dev/prod) ===
+# https://pypi.org/project/django-did-auth/
+DID_AUTH = {
     "LOGIN_REDIRECT": "/dashboard/",
-    "LOGOUT_REDIRECT": "/auth/login/",
+    "LOGOUT_REDIRECT": "/login/",
+    
+    "ADMIN_URL": "admin/",
+    "ADMIN_IP_WHITELIST": get_list_env("ADMIN_IP_WHITELIST", default=['127.0.0.1', '::1']),  # Localhost by default
+
+    # on your URL
+    # from django_did_auth.config.loader import get_admin_url
+    # urlpatterns = [
+    #     path(get_admin_url(), admin.site.urls),
+    # ]
+
     "ROLES": {
-        "admin": "/dashboard/admin/",
-        "staff": "/dashboard/staff/",
-        "moderator": "/dashboard/moderator/",
+        "admin": "/admin-dashboard/",
+        "staff": "/staff-dashboard/",
+        "moderator": "/moderator-dashboard/",
         "user": "/dashboard/",
     },
-    "UI_FRAMEWORK": "tailwind",
+
+    "EMAIL": {
+        "VERIFY_EXPIRY_HOURS": 24,
+        "RESET_EXPIRY_HOURS": 1,
+        "FROM_EMAIL": None,  # Will use DEFAULT_FROM_EMAIL
+    },
+
     "RATE_LIMIT": {
         "LOGIN": "10/m",
         "REGISTER": "5/m",
+        "PASSWORD_RESET": "5/m",
     },
-}
-# =============================================
-# === SAUTH Customization ===
-SAUTH['ROLES'].update({
-    'editor': '/dashboard/editor/',
-    'author': '/dashboard/author/',
-})
 
-# Obscure admin URL
-ADMIN_URL = 'hidden-admin-xyz123/'
-# on your URL
-# urlpatterns = [
-#     path(settings.ADMIN_URL, admin.site.urls),
-# ]
+    "UI_FRAMEWORK": "tailwind",  # "tailwind" or "bootstrap"
+
+    "ENABLE_AUDIT": True,
+    "TRUST_PROXY": False,
+    
+    "SECURITY": {
+        "PASSWORD_MIN_LENGTH": 12,
+        "ENABLE_AXES": True,
+        "LOCKOUT_AFTER_ATTEMPTS": 5,
+        "LOCKOUT_DURATION_MINUTES": 30,
+        "REQUIRE_HTTPS": True,          # Enforce in production
+    },
+    "AUDIT": {
+        "ENABLED": True,
+        "LOG_SENSITIVE": False,         # Don't log passwords
+    }
+    
+}
+# === DID_AUTH Customization ===
+# DID_AUTH['ROLES'].update({
+#     'editor': '/dashboard/editor/',
+#     'author': '/dashboard/author/',
+# })
+
 
 # Additinal settings can be added here as needed
 # E.g.
 # Admin security
-ADMIN_IP_WHITELIST = get_list_env("ADMIN_IP_WHITELIST", default=[])
-mw = 'core.middleware.admin_security.AdminIPWhitelistMiddleware'
-if mw not in MIDDLEWARE:
-    MIDDLEWARE.append(mw)
-# Create these middleware and logic to restrict access to admin based on IP whitelist
-# myproject/core/middleware/admin_security.py
-'''
-# core/middleware/admin_security.py
-from django.conf import settings
-from django.http import HttpResponseForbidden
-from django_sauth.security.audit.logger import get_client_ip, audit_logger
-class AdminIPWhitelistMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-        self.admin_path = f"/{settings.ADMIN_URL.strip('/')}/"
-    def __call__(self, request):
-        # ✅ Skip in development
-        # if settings.DEBUG:
-        #     return self.get_response(request)
-        path = request.path.rstrip("/") + "/"
-        if path.startswith(self.admin_path):
-            allowed_ips = [ip.strip() for ip in settings.ADMIN_IP_WHITELIST if ip.strip()]
-            if allowed_ips:
-                client_ip = get_client_ip(request)
-                if client_ip not in allowed_ips:
-                    audit_logger.warning(
-                        "admin_access_blocked",
-                        extra={"ip": client_ip, "path": request.path}
-                    )
-                    return HttpResponseForbidden("Forbidden")
-        return self.get_response(request)'''
+MIDDLEWARE.insert(0, 'django_did_auth.security.admin.ipwhitelist.AdminIPWhitelistMiddleware')
 
 
+```
+
+## Short Example
+
+```python
+from django_project_core_settings import *
+from django_project_core_settings.utils.env import get_list_env
+# === Extend with your apps ===
+INSTALLED_APPS += [
+    # Third-party
+    'rest_framework',
+    # Local apps
+    'accounts',
+]
+AUTH_USER_MODEL = 'accounts.CustomUser'
+MIDDLEWARE += [
+    # 'your.middleware.Class',
+]
+ROOT_URLCONF = 'core_system.urls'
+WSGI_APPLICATION = 'core_system.wsgi.application'
+ALLOWED_HOSTS = get_list_env("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
+CSRF_TRUSTED_ORIGINS += [
+    "https://your-frontend.com",
+]
+DID_AUTH = {
+    "LOGIN_REDIRECT": "/dashboard/",
+    "LOGOUT_REDIRECT": "/auth/login/",
+    "ADMIN_URL": "secret-admin/",
+    "ADMIN_IP_WHITELIST": get_list_env("ADMIN_IP_WHITELIST", default=['127.0.0.1', '::1']),
+    "ROLES": {
+        "owner": "/dashboard/owner/",
+        "manager": "/dashboard/manager/",
+        "staff": "/dashboard/staff/",
+    },
+}
+# Admin security
+MIDDLEWARE.insert(0, 'django_did_auth.security.admin.ipwhitelist.AdminIPWhitelistMiddleware')
 ```
 
 ## Environment Variables (.env)
@@ -223,7 +261,7 @@ DJANGO_ENV=local python manage.py runserver
 ### Safe to override:
 
 - `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`
-- `SAUTH['ROLES']`
+- `DID_AUTH['ROLES']`
 - `LOGIN_REDIRECT_URL`, `ROOT_URLCONF`, etc.
 
 ### Do NOT override directly:
@@ -233,8 +271,6 @@ DJANGO_ENV=local python manage.py runserver
 - `AUTHENTICATION_BACKENDS`
 - Core security headers (HSTS, secure cookies, etc.)
 - `MIDDLEWARE` and `INSTALLED_APPS` base lists (use `MIDDLEWARE += []`, `INSTALLED_APPS += []` instead)
-
-See full documentation: `SETTINGS.md`
 
 
 ## Logging
@@ -260,7 +296,7 @@ dependencies = [
 ```
 
 ### For authentication
-- to customized authentication, please visit `https://pypi.org/project/django-did-auth/`
+- to customized authentication (settings & UI), please visit `https://pypi.org/project/django-did-auth/`
 
 # License
 MIT License

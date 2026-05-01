@@ -20,7 +20,7 @@ def get_env(key: str, default: Any = None, required: bool = False) -> Any:
     """Get environment variable."""
     value = os.getenv(key, default)
     if required and not value and value != 0:
-        raise ValueError(f"❌ {key} is required but not set in .env")
+        raise ValueError(f"{key} is required but not set in .env")
     return value
 
 
@@ -34,7 +34,7 @@ def get_list_env(key: str, default: list | None = None, separator: str = ",", re
     """Convert comma-separated string to list. Supports required."""
     value = os.getenv(key)
     if required and not value:
-        raise ValueError(f"❌ {key} is required but not set in .env")
+        raise ValueError(f"{key} is required but not set in .env")
     if not value:
         return default or []
     return [x.strip() for x in value.split(separator) if x.strip()]

@@ -1,5 +1,5 @@
 
-def get_sauth_config(debug: bool):
+def get_did_auth_config(debug: bool):
     return {
         "LOGIN_REDIRECT": "/dashboard/",
         "LOGOUT_REDIRECT": "/auth/login/",
@@ -18,4 +18,4 @@ def get_sauth_config(debug: bool):
     }
 
 
-SAUTH_CONFIG = get_sauth_config  # expose the function
+DID_AUTH_CONFIG = get_did_auth_config  # expose the function

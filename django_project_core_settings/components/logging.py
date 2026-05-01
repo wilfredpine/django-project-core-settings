@@ -88,7 +88,7 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        "sauth.audit": {
+        "did_auth.audit": {
             "handlers": ["console", "security_file"],
             "level": "INFO",
             "propagate": False,

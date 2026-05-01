@@ -1,6 +1,6 @@
 AUTH_USER_MODEL = 'users.CustomUser'
 
-LOGIN_URL = 'sauth:login'
+LOGIN_URL = 'did_auth:login'
 LOGIN_REDIRECT_URL = '/dashboard/'
 
 AUTHENTICATION_BACKENDS = [
