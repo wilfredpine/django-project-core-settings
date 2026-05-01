@@ -146,7 +146,7 @@ CSRF_TRUSTED_ORIGINS += [
 # === default DID_AUTH config (can be overridden in dev/prod) ===
 # https://pypi.org/project/django-did-auth/
 DID_AUTH = {
-    "LOGIN_REDIRECT": "/dashboard/",
+    # "LOGIN_REDIRECT": "/dashboard/", # already redirect based on roles below
     "LOGOUT_REDIRECT": "/login/",
     
     "ADMIN_URL": "admin/",
@@ -158,7 +158,8 @@ DID_AUTH = {
     #     path(get_admin_url(), admin.site.urls),
     # ]
 
-    "ROLES": {
+    # redirect based on roles
+    "ROLES": { 
         "admin": "/admin-dashboard/",
         "staff": "/staff-dashboard/",
         "moderator": "/moderator-dashboard/",
@@ -237,6 +238,7 @@ DID_AUTH = {
     "LOGOUT_REDIRECT": "/auth/login/",
     "ADMIN_URL": "secret-admin/",
     "ADMIN_IP_WHITELIST": get_list_env("ADMIN_IP_WHITELIST", default=['127.0.0.1', '::1']),
+    # redirect based on roles
     "ROLES": {
         "owner": "/dashboard/owner/",
         "manager": "/dashboard/manager/",
