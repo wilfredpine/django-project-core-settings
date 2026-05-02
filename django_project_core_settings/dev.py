@@ -21,3 +21,6 @@ STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 # DID_AUTH
 DID_AUTH = DID_AUTH_CONFIG(DEBUG)
+
+# Optional: override DB for local development
+# DATABASES['default']['NAME'] = BASE_DIR / 'local_db.sqlite3'
