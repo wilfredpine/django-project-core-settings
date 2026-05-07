@@ -1,6 +1,6 @@
 # settings/prod.py
 from .base import *
-from .utils.env import get_list_env
+from .utils.env import get_list_env, get_env
 
 DEBUG = False
 DID_AUTH = DID_AUTH_CONFIG(DEBUG)
@@ -10,6 +10,8 @@ ALLOWED_HOSTS = get_list_env("ALLOWED_HOSTS", required=True)
 CSRF_TRUSTED_ORIGINS = get_list_env("CSRF_TRUSTED_ORIGINS")
 if not CSRF_TRUSTED_ORIGINS:
     raise ValueError("! CSRF_TRUSTED_ORIGINS is highly recommended in production")
+
+CORS_ALLOWED_ORIGINS = get_list_env("CORS_ALLOWED_ORIGINS", [])
 
 # Strict security
 SESSION_COOKIE_SECURE = True
@@ -24,3 +26,6 @@ CSP_REPORT_ONLY = False
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024  # 2MB
+
+if not get_env("EMAIL_HOST"):
+    raise ValueError("EMAIL_HOST must be set in production")

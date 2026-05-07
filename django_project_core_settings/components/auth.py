@@ -5,7 +5,7 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    'django_did_auth.core.auth_backends.EmailBackend', # 'django.contrib.auth.backends.ModelBackend',
 ]
 
 PASSWORD_HASHERS = [

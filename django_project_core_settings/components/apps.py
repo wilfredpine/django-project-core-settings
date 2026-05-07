@@ -9,6 +9,7 @@ INSTALLED_APPS = [
 
     # Security & utilities
     'axes',
+    'corsheaders',
     'django_ratelimit',
     'django_did_auth',          # if you're using it
 

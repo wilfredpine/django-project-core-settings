@@ -2,13 +2,15 @@
 from .base import *
 from .utils.env import get_bool_env, get_list_env
 
-DEBUG = get_bool_env("DEBUG", True)
+DEBUG = True
 
 ALLOWED_HOSTS = get_list_env("ALLOWED_HOSTS", ["localhost", "127.0.0.1", "0.0.0.0"])
 CSRF_TRUSTED_ORIGINS = get_list_env(
     "CSRF_TRUSTED_ORIGINS", 
     ["http://localhost:8000", "http://127.0.0.1:8000"]
 )
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Relax security for development
 SESSION_COOKIE_SECURE = False

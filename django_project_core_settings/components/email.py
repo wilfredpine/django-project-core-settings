@@ -9,4 +9,4 @@ EMAIL_HOST_PASSWORD = get_env("EMAIL_PASS")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Default (will be overridden in dev/prod)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

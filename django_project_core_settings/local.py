@@ -11,6 +11,9 @@ CSRF_TRUSTED_ORIGINS = get_list_env("CSRF_TRUSTED_ORIGINS")
 if not CSRF_TRUSTED_ORIGINS:
     raise ValueError("! CSRF_TRUSTED_ORIGINS is highly recommended in production")
 
+
+CORS_ALLOW_ALL_ORIGINS = True
+
 # Strict security bypass for local 
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
@@ -21,6 +24,7 @@ CSP_SCRIPT_SRC = ("'self'",)
 CSP_STYLE_SRC = ("'self'",)
 CSP_REPORT_ONLY = False
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024  # 2MB

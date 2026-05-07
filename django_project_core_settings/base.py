@@ -1,7 +1,7 @@
 # settings/base.py
 from .utils.paths import BASE_DIR
-
 from .utils.path_validator import ensure_dirs
+from django_project_core_settings.utils.env import get_env
 
 # Ensure core directories exist
 ensure_dirs(
@@ -26,6 +26,7 @@ from .components.csp import *
 from .components.static import *
 from .components.email import *
 from .components.logging import *
+from .components.rest_api import *
 
 # =============================================
 # TEMPLATES

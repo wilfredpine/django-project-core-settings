@@ -143,6 +143,11 @@ CSRF_TRUSTED_ORIGINS += [
     "https://your-frontend.com",
 ]
 
+if get_list_env("DJANGO_ENV") == "prod" or get_list_env("DJANGO_ENV") == "local" :
+    CORS_ALLOWED_ORIGINS = [
+        "https://yourdomain.com",
+    ]
+
 # === default DID_AUTH config (can be overridden in dev/prod) ===
 # https://pypi.org/project/django-did-auth/
 DID_AUTH = {
@@ -168,8 +173,6 @@ DID_AUTH = {
     # make sure it matches your models.py roles
     # ROLE_CHOICES = [
     #     ('admin', 'Administrator'),
-    #     ('staff', 'Staff User'),
-    #     ('moderator', 'Moderator User'),
     #     ('user', 'Regular User'),
     # ]
 
@@ -233,7 +236,6 @@ from django_project_core_settings.utils.env import get_list_env
 # === Extend with your apps ===
 INSTALLED_APPS += [
     # Third-party
-    'rest_framework',
     # Local apps
     'accounts',
 ]
@@ -247,6 +249,10 @@ ALLOWED_HOSTS = get_list_env("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
 CSRF_TRUSTED_ORIGINS += [
     "https://your-frontend.com",
 ]
+if get_list_env("DJANGO_ENV") == "prod" or get_list_env("DJANGO_ENV") == "local" :
+    CORS_ALLOWED_ORIGINS = [
+        "https://yourdomain.com",
+    ]
 DID_AUTH = {
     "LOGOUT_REDIRECT": "/auth/login/",
     "ADMIN_URL": "secret-admin/",
@@ -264,22 +270,84 @@ MIDDLEWARE.insert(0, 'django_did_auth.security.admin.ipwhitelist.AdminIPWhitelis
 ```
 
 ## Environment Variables (.env)
-```env
-# dev | prod | local
-DJANGO_ENV=dev                    
-SECRET_KEY='your-secret-key'
-ALLOWED_HOSTS=localhost,127.0.0.1,yourdomain.com
-CSRF_TRUSTED_ORIGINS=http://localhost:8000,https://yourdomain.com
-REDIS_URL=redis://127.0.0.1:6379/1
 
+```env
+# Django environment variables (for development, local, and production)
+# dev | prod | local
+DJANGO_ENV=dev
+
+# Secret key (replace with your own secure key in production)
+# Always rotate this key periodically and keep it secret. Do not hardcode it in your codebase; use environment variables instead.
+# You can generate a secure key using Django's get_random_secret_key() function or an online generator.
+# Example: from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())
+# For development, you can use a hardcoded key, but make sure to change it for production and keep it secret.
+# Never commit your actual secret key to version control. Use environment variables or a secrets manager in production.
+# Add .env in .gitignore to prevent it from being committed.
+SECRET_KEY='your-secret-key'
+
+# Comma-separated list of allowed hosts (e.g., localhost,
+ALLOWED_HOSTS=localhost,127.0.0.1,yourdomain.com
+
+# Email settings (using Gmail SMTP as an example)
 EMAIL_HOST=smtp.gmail.com
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-app-password
 
-ADMIN_IP_WHITELIST=127.0.0.1,192.168.68.100
+# Optional: restrict admin access to specific IPs (comma-separated list)
+ADMIN_IP_WHITELIST=192.168.68.100,
+
+# Enable or disable the REST API (set to true to enable)
+# if true, it will load the custom secured rest_api settings, otherwise it will skip it.
+# Set true if you want to use API
+ENABLE_REST_API=true 
+# JWT key for signing tokens (replace with your own secure key in production)
+# Must be a 256-bit key (32 bytes) for HS256 algorithm. You can generate one using a secure random generator.
+# Example: openssl rand -hex 32
+# Always rotate this key periodically and keep it secret. Do not hardcode it in your codebase; use environment variables instead.
+JWT_SIGNING_KEY=your-256-bit-secret-key-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Add your frontend URL here (e.g., http://localhost:3000 for React dev server)
+CSRF_TRUSTED_ORIGINS=http://localhost:8000,https://yourdomain.com
+CORS_ALLOWED_ORIGINS=http://127.0.0.1:5500/,http://127.0.0.1:8000/
+
+# Redis settings (for caching, rate limiting, and lockout)
+REDIS_REQUIRED=True # required True for prod
+REDIS_URL=redis://127.0.0.1:6379/1
+
+# ----------------------------------------------------------------------------------------------------
+# Default values for rate limiting and lockout (can be overridden by environment variables)
+# ----------------------------------------------------------------------------------------------------
+
+## Lockout settings for django-axes
+
+# AXES_FAILURE_LIMIT = 5
+# AXES_COOLOFF_TIME = 30 # in minutes
+
+## Rate limit settings for django-ratelimit 
+
+# LOGIN_RATE=10/m
+# REGISTER_RATE=5/m
+# PASSWORD_RESET_RATE=5/m
+
+## Custom rate limits for different API endpoints
+
+# API_PUBLIC_READONLY_RATE=200/min
+# PUBLIC_GET_RATE=200/min
+# PUBLIC_POST_RATE=50/min
+# API_KEY_RATE=200/min
+# API_PUBLIC_RATE=100/min
+# API_AUTHENTICATED_RATE=1000/min
+# LOGIN_IP_RATE=10/min
+# LOGIN_EMAIL_RATE=5/min
+# REGISTER_IP_RATE=5/min
+# REGISTER_EMAIL_RATE=3/min
+# PASSWORD_RESET_REQUEST_RATE=5/min
+# PASSWORD_RESET_CONFIRM_RATE=5/min
+# CHANGE_PASSWORD_RATE=10/min
 ```
 
 ## Run Commands
+
 ```bash
 # Development
 DJANGO_ENV=dev python manage.py runserver
@@ -328,24 +396,18 @@ dependencies = [
     "django-did-auth>=0.1",
 ]
 ```
+
 - Use `pip install django-debug-toolbar` for local (`DJANGO_ENV=local`)
 
 
-
-
-
 ---
-
-
-
 
 
 ### From Django-DID-Auth (A secure, pluggable authentication framework for Django)
 
-
 ---
 
-## Role-Based Redirection (already in Settings above)
+## Role-Based Redirection Settings (already in Settings above)
 
 ```python
 DID_AUTH = {
@@ -355,6 +417,109 @@ DID_AUTH = {
         "user": "/dashboard/",
     }
 }
+```
+
+## Activate on project URL
+
+
+#### Using full authentication:
+- `your_project/urls.py`
+
+```python
+
+from django.views.generic.base import RedirectView
+from django_did_auth.core.views.password import change_password_view
+
+urlpatterns = [
+    # admin
+    path('admin/', admin.site.urls),
+
+    # DID_AUTH URLs
+    path('auth/', include('django_did_auth.urls')), # Include DID_AUTH URLs
+    path('', RedirectView.as_view(pattern_name='did_auth:login', permanent=False)),
+    path('profile/change-password/', change_password_view, name="change_password"), 
+
+    # 👤 Role Dashboards
+    path('dashboard/admin/', main_views.admin_dashboard),
+    path('dashboard/', main_views.user_dashboard),
+]
+```
+
+#### Or using only specific authentication:
+
+- create `urls.py` at your app where custom_user model made
+- Example: `your_project/user_app/urls.py`
+
+```python
+
+from django.urls import path
+from django.shortcuts import render
+from django_did_auth.core.views.register import register_view
+from django_did_auth.core.views.login import login_view
+from django_did_auth.core.views.logout import logout_view
+from django_did_auth.core.views.activation import activate_account_view
+from django_did_auth.core.views.password_reset import (
+    password_reset_request_view,
+    password_reset_confirm_view
+)
+
+app_name = "did_auth"
+
+urlpatterns = [
+    # Authentication
+    # path("register/", register_view, name="register"),
+    path("login/", login_view, name="login"),
+    path("logout/", logout_view, name="logout"),
+
+    # Email Verification
+    # path("activate/<uidb64>/<token>/", activate_account_view, name="activate"),
+    # path("verification-sent/", lambda r: render(r, "did_auth/verification_sent.html"), name="verification_sent"),
+
+    # Password Reset
+    # path("password-reset/", password_reset_request_view, name="password_reset_request"),
+    # path("password-reset-confirm/<uidb64>/<token>/", password_reset_confirm_view, name="password_reset_confirm"),
+]
+
+```
+
+then include it on url project urls
+- `your_project/urls.py`
+
+```python
+from django.contrib import admin
+from django.urls import include, path
+
+from core_system import settings
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('auth/', include('user_app.urls')), # from `your_project/user_app/urls.py`
+    ...
+]
+
+```
+
+IMPORTANT: for disabling / or using specific authentication, use custom Templates (see below)
+
+
+---
+
+## Using Ratelimiter
+
+```python
+from django_did_auth.security.ratelimit.decorators import safe_ratelimit
+
+@safe_ratelimit(key='ip', rate="10/m")
+@safe_ratelimit(key='post:email', "5/m")
+def myform_view(request):
+    ...
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+@safe_ratelimit(key="user", rate="5/m", block=True)
+def myform_view(request):
+    ...
 ```
 
 ---
@@ -630,6 +795,7 @@ class CustomUser(AbstractUser):
 ```
 
 ## Re-used Register flow on your `Views`
+
 ```python
 from django_did_auth.core.flows.register_flow import register_user
 
@@ -638,6 +804,7 @@ if request.method == "POST":
         if form.is_valid():
             user = register_user(request, form)
 ```
+
 - this will save as `user.is_active = False`
 
 
@@ -650,6 +817,7 @@ from django_did_auth.security.decorators.roles import role_required
 def dashboard(request):
     ...
 ```
+
 If user is:
 - ✅ owner → allow
 - ❌ not owner → redirect or forbidden
@@ -671,6 +839,7 @@ handler404 = "django_did_auth.core.utils.errors.handle_404"
 ## Template override only
 Create the following templates
 - `Templates/did_auth/errors/401.html`
+
 
 ```html
 <div class="bg-white shadow-lg rounded-2xl p-8 max-w-md text-center">
@@ -816,6 +985,8 @@ return handle_error(request, 401, "Please login first.")
 
 ```
 
+Examples:
+
 - A) Role-based dashboard
 ```python
 @login_required
@@ -855,9 +1026,366 @@ if not obj:
 
 ---
 
+# Django RestFramework Settings
+
+```python
+INSTALLED_APPS += [
+    "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
+]
+# Please apply migrations for token_blacklist app to enable token blacklisting functionality
+```
+
+# Activate API Urls
+
+- Include on your URL (`my_project/urls.py`)
+
+```python
+# Activate API routes
+urlpatterns += [
+    path("api/auth/", include("django_did_auth.api.urls")),
+]
+```
 
 
+## Inside `django_did_auth.api.urls` (if you want use specific APIs):
 
+```python
+from django.urls import path
+from .views import (
+    ChangePasswordAPIView,
+    APILoginView, 
+    LogoutAPIView,
+    PasswordResetConfirmAPIView,
+    PasswordResetRequestAPIView, 
+    RegisterAPIView,
+    ProfileAPIView, 
+    TokenRefreshAPIView,
+)
+
+urlpatterns = [
+    # JWT Token Refresh Endpoint
+    path("refresh/", TokenRefreshAPIView.as_view(), name="api-refresh"),
+    
+    # Authentication Endpoints
+    path("register/", RegisterAPIView.as_view(), name="api-register"),
+    path("login/", APILoginView.as_view(), name="api-login"),
+    path("logout/", LogoutAPIView.as_view(), name="api-logout"),
+    
+    # Password Reset Endpoints
+    path("password-reset/", PasswordResetRequestAPIView.as_view(), name="api-password-reset-request"),
+    path("password-reset-confirm/<uidb64>/<token>/", PasswordResetConfirmAPIView.as_view(), name="api-password-reset-confirm"),
+    
+    # User Profile & Password Change (Authenticated Endpoints)
+    path("profile/", ProfileAPIView.as_view(), name="api-profile"),
+    path("password-change/", ChangePasswordAPIView.as_view(), name="api-password-change"), 
+    
+]
+
+ # Role-Based Access Control Endpoints Examples
+ # from .views import HealthCheckAPIView, AdminOnlyAPIView, UserOnlyAPIView
+"""
+path("health/", HealthCheckAPIView.as_view(), name="api-health"),
+path("admin-only/", AdminOnlyAPIView.as_view(), name="api-admin-only"),
+path("user-only/", UserOnlyAPIView.as_view(), name="api-user-only"),
+"""
+```
+
+## API security for your own API Views:
+
+- is authenticated:
+
+```python
+class ProfileAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({
+            ...
+
+```
+
+UI sample:
+
+```html
+<pre id="output"></pre>
+<button id="getProfileBtn" type="button">Get Profile</button>
+```
+```javascript
+
+    async function refreshToken() {
+        const refresh = localStorage.getItem("refresh_token");
+
+        const res = await fetch("http://127.0.0.1:8000/api/auth/refresh/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh })
+        });
+
+        const data = await res.json();
+
+        if (data.access) {
+            localStorage.setItem("access_token", data.access);
+            localStorage.setItem("refresh_token", data.refresh);
+            return true;
+        }
+        return false;
+    }
+
+    document.getElementById("getProfileBtn").addEventListener("click", async function() {
+        let access = localStorage.getItem("access_token");
+
+        let res = await fetch("http://127.0.0.1:8000/api/auth/profile/", {
+            headers: { "Authorization": `Bearer ${access}` }
+        });
+
+        if (res.status === 401) {
+            const ok = await refreshToken();
+            if (!ok) {
+                document.getElementById("output").textContent = "Session expired";
+                return;
+            }
+
+            access = localStorage.getItem("access_token");
+
+            res = await fetch("http://127.0.0.1:8000/api/auth/profile/", {
+                headers: { "Authorization": `Bearer ${access}` }
+            });
+        }
+
+        const data = await res.json();
+        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+    });
+```
+
+- admin access only:
+
+```python
+class AdminOnlyAPIView(APIView):
+    permission_classes = [IsAuthenticated, role_access('admin')]
+
+    def get(self, request):
+        return Response({"message": "Admin access granted"})
+
+# path("api/auth/admin-only/", AdminOnlyAPIView.as_view(), name="api-admin-only"),
+```
+
+```javascript
+    document.getElementById("adminOnlyBtn").addEventListener("click", async function() {
+        let access = localStorage.getItem("access_token");
+
+        let res = await fetch("http://127.0.0.1:8000/api/auth/admin-only/", {
+            headers: { "Authorization": `Bearer ${access}` }
+        });
+
+        if (res.status === 401) {
+            const ok = await refreshToken();
+            if (!ok) {
+                document.getElementById("output").textContent = "Session expired";
+                return;
+            }
+
+            access = localStorage.getItem("access_token");
+
+            res = await fetch("http://127.0.0.1:8000/api/auth/admin-only/", {
+                headers: { "Authorization": `Bearer ${access}` }
+            });
+        }
+
+        const data = await res.json();
+        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+    });
+
+```
+
+- multiple role access:
+
+```python
+class UserOnlyAPIView(APIView):
+    permission_classes = [IsAuthenticated, role_access('user')]
+
+    def get(self, request):
+        return Response({"message": "User access granted"})
+
+# path("api/auth/user-only/", UserOnlyAPIView.as_view(), name="api-user-only"),
+```
+```javascript
+    document.getElementById("userOnlyBtn").addEventListener("click", async function() {
+        let access = localStorage.getItem("access_token");
+
+        let res = await fetch("http://127.0.0.1:8000/api/auth/user-only/", {
+            headers: { "Authorization": `Bearer ${access}` }
+        });
+
+        if (res.status === 401) {
+            const ok = await refreshToken();
+            if (!ok) {
+                document.getElementById("output").textContent = "Session expired";
+                return;
+            }
+
+            access = localStorage.getItem("access_token");
+
+            res = await fetch("http://127.0.0.1:8000/api/auth/user-only/", {
+                headers: { "Authorization": `Bearer ${access}` }
+            });
+        }
+
+        const data = await res.json();
+        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+    });
+```
+
+- Sample Login / Logout:
+
+```javascript
+    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/api/auth/login/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+
+            console.log(data);
+
+            // Display response
+            document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+
+            // Save token if success
+            if (data.access) {
+                localStorage.setItem("access_token", data.access);
+                localStorage.setItem("refresh_token", data.refresh);
+            }
+
+        } catch (error) {
+            document.getElementById("output").textContent = error;
+        }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async function() {
+        const accessToken = localStorage.getItem("access_token");
+        const refreshToken = localStorage.getItem("refresh_token");
+
+        if (!accessToken && !refreshToken) {
+            document.getElementById("output").textContent = "No token found. Please login first.";
+            return;
+        }
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/api/auth/logout/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                    refresh: refreshToken
+                })
+            });
+
+            const data = await response.json();
+            document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+        } catch (error) {
+            document.getElementById("output").textContent = error;
+        }
+    });
+```
+
+- Other existing URLs can be used:
+
+```python
+# Authentication Endpoints
+http://127.0.0.1:8000/api/auth/register/
+http://127.0.0.1:8000/api/auth/login/
+http://127.0.0.1:8000/api/auth/logout/
+
+# Password Reset Endpoints
+http://127.0.0.1:8000/api/auth/password-reset/
+http://127.0.0.1:8000/api/auth/password-reset-confirm/<uidb64>/<token>/
+
+# User Profile & Password Change (Authenticated Endpoints)
+http://127.0.0.1:8000/api/auth/profile/
+http://127.0.0.1:8000/api/auth/password-change/
+```
+
+
+### Using throttle (ratelimiter for APIs):
+
+- Public
+
+```python
+class PublicContentAPIView(APIView):
+    throttle_classes = [
+        PublicThrottle,
+    ]
+
+    def get(self, request):
+        ...
+```
+
+- Public Readonly
+
+```python
+class PublicReadOnlyContentAPIView(APIView):
+    throttle_classes = [
+        PublicReadOnlyThrottle,
+    ]
+
+    def get(self, request):
+        ...
+```
+
+- Authenticated
+
+```python
+class AuthenticatedAllRolesAPIView(APIView):
+    throttle_classes = [
+        AuthenticatedThrottle,
+    ]
+
+    def get(self, request):
+        ...
+```
+
+- Post or Get Method aware
+
+```python
+class MethodAwarePublicContentAPIView(APIView):
+    throttle_classes = [
+        MethodAwarePublicThrottle,
+    ]
+
+    def get(self, request):
+```
+
+- APIKeyThrottle
+
+```python
+class RequiredAPIKeyContentView(APIView):
+    throttle_classes = [
+        APIKeyThrottle,
+    ]
+
+    def get(self, request):
+```
+
+---
 
 # License
 MIT License
